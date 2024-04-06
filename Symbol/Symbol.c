@@ -44,12 +44,12 @@ Symbol MEMORY_MAP[DEFAULT_MAP] = {
 static Storage *H = NULL;
 unsigned int INDEX = DEFAULT_MAP;
 static bool __is_str_alpha(const char *);
-HashInt __find_slot(const char*);
-HashInt __hash_index(const char*);
-
+HashInt __find_slot(const char *);
+HashInt __hash_index(const char *);
 
 void build_symbol_table()
 {
+    file_constructor();
     H = (Storage *)malloc(sizeof(Storage) * BUCKET_SIZE);
 
     if (H == NULL)
@@ -62,25 +62,25 @@ void build_symbol_table()
     Symbol *sym = NULL;
     while (t < DEFAULT_MAP)
     {
-        addEntry(MEMORY_MAP[t].symbol,MEMORY_MAP[t].address);
+        addEntry(MEMORY_MAP[t].symbol, MEMORY_MAP[t].address);
         t++;
     }
     char *str = (char *)malloc(sizeof(char) * SYMBOL_LENGTH);
     parser_init();
-    file_constructor();
+
     while (hasMoreLines())
     {
         if (advance() > 0)
         {
             expression();
-            if(TYPE == L_INSTRUCTION){
+            if (TYPE == L_INSTRUCTION)
+            {
                 memset(str, 0, sizeof(char) * SYMBOL_LENGTH);
                 parse_symbol(str);
-            
+
                 if (!contains(str))
-                {   
-                    addEntry(str,L_INSTRUCTION_LINES);
-                
+                {
+                    addEntry(str, L_INSTRUCTION_LINES);
                 }
             }
         }
@@ -101,11 +101,10 @@ void print_table()
         }
         c++;
     }
-    printf("Total in table %d\n",t);
- 
+    printf("Total in table %d\n", t);
 }
 
-void addEntry(const char *symbol,const unsigned int address)
+void addEntry(const char *symbol, const unsigned int address)
 {
     if (H == NULL)
     {
@@ -123,18 +122,20 @@ void addEntry(const char *symbol,const unsigned int address)
     memset(sym, 0, sizeof(Symbol));
     strcpy(sym->symbol, symbol);
     sym->address = address;
-    if(H[hash].symbol != NULL){
+    if (H[hash].symbol != NULL)
+    {
         hash = __find_slot(symbol);
     }
     H[hash].symbol = sym;
 }
 
-
-//opening addressing hashing
-HashInt __hash_index(const char *symbol){
+// opening addressing hashing
+HashInt __hash_index(const char *symbol)
+{
     char c = 0;
     HashInt key = 0;
-    while(symbol[c] != '\0'){
+    while (symbol[c] != '\0')
+    {
         key += symbol[c];
         c++;
     }
@@ -145,35 +146,41 @@ unsigned int getAddress(const char *symbol)
 {
     unsigned int i = __hash_index(symbol);
 
-    if(H[i].symbol == NULL){
-        fprintf(stderr,"No symbol address found %s!\n",symbol);
+    if (H[i].symbol == NULL)
+    {
+        fprintf(stderr, "No symbol address found %s!\n", symbol);
         exit(0);
     }
 
-    while(H[i].symbol != NULL){
-        if(strcmp(symbol,H[i].symbol->symbol) == 0){
+    while (H[i].symbol != NULL)
+    {
+        if (strcmp(symbol, H[i].symbol->symbol) == 0)
+        {
             return H[i].symbol->address;
         }
         i++;
     }
-    
+
     return H[i].symbol->address;
 }
 
-HashInt __find_slot(const char *symbol){
+HashInt __find_slot(const char *symbol)
+{
     HashInt i = __hash_index(symbol);
-    while(H[i].symbol != NULL){
+    while (H[i].symbol != NULL)
+    {
         i++;
     }
     return i % BUCKET_SIZE;
 }
 
-
 bool contains(const char *symbol)
-{   
+{
     unsigned int i = __hash_index(symbol);
-    while(H[i].symbol != NULL){
-        if(strcmp(symbol,H[i].symbol->symbol) == 0){
+    while (H[i].symbol != NULL)
+    {
+        if (strcmp(symbol, H[i].symbol->symbol) == 0)
+        {
             return true;
         }
         i++;
@@ -184,7 +191,7 @@ bool contains(const char *symbol)
 bool __is_str_alpha(const char *sym)
 {
     int t = 0;
-    
+
     while (sym[t] != '\0')
     {
         if (isalpha(sym[t]))
@@ -195,10 +202,11 @@ bool __is_str_alpha(const char *sym)
     return false;
 }
 
-void free_table(){
+void free_table()
+{
     HashInt c = 0;
     HashInt t = 0;
-     while (c < BUCKET_SIZE)
+    while (c < BUCKET_SIZE)
     {
         if (H[c].symbol != NULL)
         {

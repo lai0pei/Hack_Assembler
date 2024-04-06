@@ -68,7 +68,8 @@ extern FILE *BUFF;
 extern unsigned int INDEX;
 
 void code_gen()
-{
+{   
+    file_constructor();
     W = fopen(OUTPUT_FILE, "w");
     if (W == NULL)
     {
@@ -80,7 +81,7 @@ void code_gen()
 
     InstructionType t;
     parser_init();
-    file_constructor();
+    
     INDEX = 16;
     while (hasMoreLines())
     {
@@ -88,17 +89,20 @@ void code_gen()
         {
             expression();
             t = instructionType();
-          
+
             if (t == A_INSTRUCTION)
             {
                 memset(sym, 0, SYMBOL_LENGTH);
                 parse_symbol(sym);
                 if (__is_str_alpha(sym))
-                {   
-                    if(contains(sym)){
+                {
+                    if (contains(sym))
+                    {
                         a_symbol = getAddress(sym);
-                    }else{
-                        addEntry(sym,INDEX);
+                    }
+                    else
+                    {
+                        addEntry(sym, INDEX);
                         a_symbol = INDEX;
                         INDEX++;
                     }
@@ -123,9 +127,8 @@ void code_gen()
                 parse_jump(STACK);
                 unsigned int jump_v = jump();
                 __int_to_binary(C_BIN | comp_v << 6 | dest_v << 3 | jump_v);
-                 __emit_code();
+                __emit_code();
             }
-           
         }
     }
     fclose(W);
@@ -137,23 +140,26 @@ unsigned int dest()
     char t = 0;
     char s = 0;
     char tmp = 0;
-   if(strlen(STACK) == 0){
+    if (strlen(STACK) == 0)
+    {
         return 0;
     }
-    while(STACK[t] != '\0'){
-        switch(STACK[t]){
-            case 'A' : 
+    while (STACK[t] != '\0')
+    {
+        switch (STACK[t])
+        {
+        case 'A':
             s |= 0b100;
             break;
-            case 'D' : 
+        case 'D':
             s |= 0b010;
             break;
-            case 'M' : 
+        case 'M':
             s |= 0b001;
             break;
-            default : 
-             fprintf(stderr,"Codegen : Invalid Dest!\n");
-        exit(0);
+        default:
+            fprintf(stderr, "Codegen : Invalid Dest! %s\n", STACK);
+            exit(0);
         }
         t++;
     }
@@ -161,13 +167,15 @@ unsigned int dest()
 }
 
 unsigned int comp()
-{   
-    if(strlen(STACK) == 0){
+{
+    if (strlen(STACK) == 0)
+    {
         return 0;
     }
     char t = 0;
     unsigned int d = -1;
-    while (COMP[t].symbol != NULL)
+
+    while (t < 28)
     {
         if (strcmp(STACK, COMP[t].symbol) == 0)
         {
@@ -176,11 +184,12 @@ unsigned int comp()
         }
         t++;
     }
-    if(d == -1) {
-        fprintf(stderr,"Codegen : Invalid Comp!\n");
+    if (d == -1)
+    {
+        fprintf(stderr, "Codegen : Invalid Comp! %s\n", STACK);
         exit(0);
     }
-        
+
     return d;
 }
 
@@ -188,10 +197,11 @@ unsigned int jump()
 {
     char t = 0;
     unsigned int d = -1;
-    if(strlen(STACK) == 0){
+    if (strlen(STACK) == 0)
+    {
         return 0;
     }
-    while (JUMP[t].symbol != NULL)
+    while (t < 7)
     {
         if (strcmp(STACK, JUMP[t].symbol) == 0)
         {
@@ -201,8 +211,9 @@ unsigned int jump()
         t++;
     }
 
-    if(d == -1) {
-        fprintf(stderr,"Codegen : Invalid Jump!\n");
+    if (d == -1)
+    {
+        fprintf(stderr, "Please! check language specification! %s\n", STACK);
         exit(0);
     }
     return d;

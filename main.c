@@ -5,10 +5,10 @@ extern char *FILE_NAME;
 
 int main(int argc, char **argv)
 {
-    if (argc < 2)
+    if (argc < 2 || strcmp(argv[1],"-h") == 0)
     {
-        fprintf(stderr, "Error parsing Arguments!\n");
-        exit(2);
+        fprintf(stdout, "Usage :\n ./assembler Max.asm\n More Info Visit - https://www.nand2tetris.org/ \n Check out Project 6\n");
+        exit(0);
     }
 
     FILE_NAME = argv[1];

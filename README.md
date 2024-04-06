@@ -17,6 +17,6 @@ make build
 ## Building a program
 ```bash
 1.File with .asm and valid Hack Instruction set is required to build.
-2.Pong.asm contains valid Hack Instruction sets.
+2.Max.asm contains valid Hack Instruction sets.
 3.The assembler will output out.hack program which can be run on Hack's CPU Simulator.
 ```

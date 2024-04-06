@@ -6,8 +6,8 @@
 #define __NEXT                    \
     LOOKAHEAD = BUFF[NEXT_INDEX]; \
     NEXT_INDEX++;
-#define __EMIT_ERROR(str)                                                                                    \
-    fprintf(stderr, "%s at line number %d , position %d and char %c \n", str, TRACK, CHAR_COUNT, LOOKAHEAD); \
+#define __EMIT_ERROR(str)                                                                                     \
+    fprintf(stderr, "%s at line number %d , position %d. Instruction : %s \n", str, TRACK, CHAR_COUNT, BUFF); \
     exit(0);
 
 static FILE *FP;
@@ -54,7 +54,7 @@ void TypeCheck(void)
     }
 }
 
-//multi passes require to reset to default count
+// multi passes require to reset to default count
 void parser_init()
 {
     EOL = false;
@@ -98,8 +98,8 @@ int advance(void)
     NEXT_INDEX = 0;
     memset(BUFF, 0, sizeof(char) * BUFFER);
     while ((tmp = fgetc(FP)))
-    {   
-         if (tmp == '\n')
+    {
+        if (tmp == '\n')
         {
             TRACK++;
             break;
@@ -129,7 +129,7 @@ int advance(void)
 
     if (is_comment)
         return 0;
-    
+
     return buff_count;
 }
 
@@ -268,7 +268,7 @@ void __c_instruction()
         __comp();
         break;
     default:
-        __EMIT_ERROR("C Instruction : Invalid dest instruction 4")
+        __EMIT_ERROR("Unsupported instruction instruction")
     }
 }
 
@@ -280,7 +280,7 @@ void __destOp()
     bool is_digit = false;
     if (!s)
     {
-        __EMIT_ERROR("C Instruction : Invalid dest instruction 1")
+        __EMIT_ERROR("Variables should start with A,D,M or 0")
     }
 
     dest_local[t++] = LOOKAHEAD;
@@ -298,7 +298,7 @@ void __destOp()
         {
             if (LOOKAHEAD == dest_local[tc])
             {
-                __EMIT_ERROR("C Instruction : Invalid dest instruction 2")
+                __EMIT_ERROR("It is neither Assignment nor Jump instruction")
             }
 
             tc++;
@@ -310,20 +310,29 @@ void __destOp()
 
     if (t > 1 && is_digit)
     {
-        __EMIT_ERROR("C Instruction : Invalid dest instruction 3")
+        __EMIT_ERROR("Unsupported instruction instruction at left side of operator")
     }
 }
 
 void __comp()
 {
     __NEXT
-    if (LOOKAHEAD == '+' || LOOKAHEAD == '-' || LOOKAHEAD == '|')
+    if (LOOKAHEAD == '-' || LOOKAHEAD == '!')
     {
         __unary_op();
     }
     else if (LOOKAHEAD == 'A' || LOOKAHEAD == 'D' || LOOKAHEAD == 'M')
     {
         __compOp();
+    }
+    else if (LOOKAHEAD != '0' && LOOKAHEAD != '1')
+    {
+        __EMIT_ERROR("Only support numeric 0 or 1 or Sign - or !")
+    }
+    __NEXT
+    if (LOOKAHEAD != '\0')
+    {
+        __EMIT_ERROR("Unsupported instruction")
     }
 }
 
@@ -333,7 +342,12 @@ void __unary_op()
     bool s = LOOKAHEAD == 'M' || LOOKAHEAD == 'A' || LOOKAHEAD == 'D' || LOOKAHEAD == '1';
     if (!s)
     {
-        __EMIT_ERROR("C Instruction : Invalid Unary Operator")
+        __EMIT_ERROR("Variables A,M,D or numeric 1,0")
+    }
+    __NEXT
+    if (LOOKAHEAD != '\0')
+    {
+        __EMIT_ERROR("Unsupported instruction Unary Operator")
     }
 }
 
@@ -342,7 +356,7 @@ void __compOp()
     bool c1 = LOOKAHEAD == 'M' || LOOKAHEAD == 'A' || LOOKAHEAD == 'D' || LOOKAHEAD == '1';
     if (!c1)
     {
-        __EMIT_ERROR("C Instruction : Invalid Compute variable on left side of operator")
+        __EMIT_ERROR("Unsupported instruction Compute variable on left side of operator")
     }
     __NEXT
     if (LOOKAHEAD != '\0')
@@ -350,17 +364,26 @@ void __compOp()
         bool op = LOOKAHEAD == '+' || LOOKAHEAD == '-' || LOOKAHEAD == '|' || LOOKAHEAD == '&';
         if (!op)
         {
-            __EMIT_ERROR("C Instruction : Invalid Compute Operator")
+            __EMIT_ERROR("Supported Compute Operator +,-,|,&")
         }
-    }
 
-    __NEXT
-    if (LOOKAHEAD != '\0')
-    {
-        bool c2 = LOOKAHEAD == 'M' || LOOKAHEAD == 'A' || LOOKAHEAD == 'D' || LOOKAHEAD == '1';
-        if (!c2)
+        __NEXT
+        if (LOOKAHEAD != '\0')
         {
-            __EMIT_ERROR("C Instruction : Invalid Compute variable on right side of operator")
+            bool c2 = LOOKAHEAD == 'M' || LOOKAHEAD == 'A' || LOOKAHEAD == 'D' || LOOKAHEAD == '1';
+            if (!c2)
+            {
+                __EMIT_ERROR("Supported Compute variable on right side of operator M,A,D,1")
+            }
+            __NEXT
+            if (LOOKAHEAD != '\0')
+            {
+                __EMIT_ERROR("Invalid Instruction")
+            }
+        }
+        else
+        {
+            __EMIT_ERROR("Incomplete instruction")
         }
     }
 }
@@ -383,7 +406,7 @@ void __jmp()
     }
     if (!f)
     {
-        __EMIT_ERROR("C Instruction : Invalid Jump")
+        __EMIT_ERROR("Unsupported instruction Jump")
     }
 }
 
@@ -395,7 +418,7 @@ void __a_instruction()
 
     if (LOOKAHEAD == '\0')
     {
-        __EMIT_ERROR("A __symbol : empty")
+        __EMIT_ERROR("Empty Symbol")
     }
 
     if (isdigit(LOOKAHEAD))
@@ -410,12 +433,12 @@ void __a_instruction()
 
         if (is_first_digit && s)
         {
-            __EMIT_ERROR("A __symbol : __symbol starting with digit")
+            __EMIT_ERROR("A symbol can be any sequence of letters, digits, underscore (_), dot (.), dollar sign ($), and colon (:) that does not begin with a digit.")
         }
 
         if (!s && !isdigit(LOOKAHEAD))
         {
-            __EMIT_ERROR("A __symbol : invalid symbol")
+            __EMIT_ERROR("A symbol can be any sequence of letters, digits, underscore (_), dot (.), dollar sign ($), and colon (:) that does not begin with a digit.")
         }
         __NEXT
     }
@@ -426,14 +449,14 @@ void __l_instruction()
     __NEXT
     if (LOOKAHEAD == ')' || isdigit(LOOKAHEAD))
     {
-        __EMIT_ERROR("L __symbol : empty or digit")
+        __EMIT_ERROR("Name this jump location")
     }
 
     while (LOOKAHEAD != ')')
     {
         if (!__is_valid_alpha(LOOKAHEAD) && !isdigit(LOOKAHEAD))
         {
-            __EMIT_ERROR("L __symbol : invalid")
+            __EMIT_ERROR("A symbol can be any sequence of letters, digits, underscore (_), dot (.), dollar sign ($), and colon (:) that does not begin with a digit.")
         }
         __NEXT
     }
