@@ -68,7 +68,7 @@ extern FILE *BUFF;
 extern unsigned int INDEX;
 
 void code_gen()
-{   
+{
     file_constructor();
     W = fopen(OUTPUT_FILE, "w");
     if (W == NULL)
@@ -81,7 +81,7 @@ void code_gen()
 
     InstructionType t;
     parser_init();
-    
+
     INDEX = 16;
     while (hasMoreLines())
     {
@@ -110,6 +110,11 @@ void code_gen()
                 else
                 {
                     a_symbol = atoi(sym);
+                    if (a_symbol > SHRT_MAX || a_symbol < 0)
+                    {
+                        fprintf(stderr, "constant value must be between 0 and 32767\n");
+                        exit(0);
+                    }
                 }
                 __int_to_binary(a_symbol);
                 __emit_code();
